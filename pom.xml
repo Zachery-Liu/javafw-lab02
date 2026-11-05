@@ -13,6 +13,8 @@
         <maven.compiler.release>8</maven.compiler.release>
         <spring.version>5.3.39</spring.version>
         <jackson.version>2.17.3</jackson.version>
+        <slf4j.version>1.7.36</slf4j.version>
+        <npm.executable>npm</npm.executable>
     </properties>
 
     <dependencies>
@@ -70,8 +72,13 @@
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-            <version>1.7.36</version>
+            <version>${slf4j.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -105,13 +112,60 @@
                 <version>3.2.5</version>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <executable>${npm.executable}</executable>
+                    <workingDirectory>${project.basedir}/frontend</workingDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>install-frontend-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <arguments>
+                                <argument>ci</argument>
+                                <argument>--no-audit</argument>
+                                <argument>--no-fund</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>build-frontend</id>
+                        <phase>prepare-package</phase>
+                        <goals><goal>exec</goal></goals>
+                        <configuration>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>build</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>3.4.0</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
+                    <webResources>
+                        <resource>
+                            <directory>${project.build.directory}/frontend</directory>
+                        </resource>
+                    </webResources>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>windows-npm</id>
+            <activation><os><family>windows</family></os></activation>
+            <properties><npm.executable>npm.cmd</npm.executable></properties>
+        </profile>
+    </profiles>
 </project>

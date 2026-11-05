@@ -5,7 +5,9 @@ import javax.servlet.Filter;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.SessionTrackingMode;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.FrameworkServlet;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
@@ -34,10 +36,8 @@ public class ServletContainersInitConfig extends AbstractAnnotationConfigDispatc
     }
 
     @Override
-    protected FrameworkServlet createDispatcherServlet(
-            org.springframework.web.context.WebApplicationContext context) {
-        org.springframework.web.servlet.DispatcherServlet servlet =
-                new org.springframework.web.servlet.DispatcherServlet(context);
+    protected FrameworkServlet createDispatcherServlet(WebApplicationContext context) {
+        DispatcherServlet servlet = new DispatcherServlet(context);
         servlet.setThrowExceptionIfNoHandlerFound(true);
         return servlet;
     }

@@ -33,6 +33,7 @@ public class SpringConfig {
         source.setInitialSize(1);
         source.setMaxActive(10);
         source.setMaxWait(5000);
+        source.setValidationQuery("SELECT 1");
         return source;
     }
 

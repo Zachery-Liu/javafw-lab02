@@ -1,6 +1,8 @@
 package com.lab.emp.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.math.BigDecimal;
@@ -26,9 +28,11 @@ public class Emp {
     private String gender;
 
     @Size(max = 50, message = "部门不能超过 50 个字符")
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String dept;
 
     @Size(max = 50, message = "岗位不能超过 50 个字符")
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private String post;
 
     @NotNull(message = "薪资不能为空")
@@ -36,6 +40,7 @@ public class Emp {
     @Digits(integer = 8, fraction = 2, message = "薪资最多 8 位整数和 2 位小数")
     private BigDecimal salary;
 
+    @TableField(updateStrategy = FieldStrategy.IGNORED)
     private LocalDate hireDate;
 
     @Min(value = 0, message = "状态只能为 0 或 1")
