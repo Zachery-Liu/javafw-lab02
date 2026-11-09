@@ -1,0 +1,86 @@
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: var(--el-text-color-primary);
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+}
+
+.topbar {
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+.topbar-inner,
+.page {
+  box-sizing: border-box;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 40px);
+}
+
+.topbar-inner {
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.page {
+  padding-block: 28px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.page-title {
+  margin-bottom: 16px;
+}
+
+.login-card {
+  box-sizing: border-box;
+  max-width: 380px;
+  margin: 8vh auto 0;
+}
+
+.login-submit {
+  width: 100%;
+}
+
+.form-alert,
+.table-tools {
+  margin-bottom: 16px;
+}
+
+.filters .el-input {
+  width: 168px;
+}
+
+.filters .el-select {
+  width: 112px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  overflow: auto;
+  margin-top: 16px;
+}
+
+@media (max-width: 560px) {
+  .filters .el-form-item {
+    margin-right: 12px;
+  }
+
+  .pagination {
+    justify-content: flex-start;
+  }
+}
