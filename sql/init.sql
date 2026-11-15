@@ -26,3 +26,37 @@ SET @emp_index_sql = IF(
 PREPARE emp_index_stmt FROM @emp_index_sql;
 EXECUTE emp_index_stmt;
 DEALLOCATE PREPARE emp_index_stmt;
+
+-- 字符集和排序规则需与原 emp.dept 完全一致，兼容实验一已有的数据库。
+SELECT character_set_name, collation_name INTO @dept_charset, @dept_collation
+FROM information_schema.columns
+WHERE table_schema = DATABASE() AND table_name = 'emp' AND column_name = 'dept';
+SET @dept_table_sql = CONCAT(
+    'CREATE TABLE IF NOT EXISTS dept (',
+    'dept_id INT PRIMARY KEY AUTO_INCREMENT, ',
+    'dept_name VARCHAR(50) CHARACTER SET ', @dept_charset, ' COLLATE ', @dept_collation,
+    ' NOT NULL, UNIQUE KEY uk_dept_name (dept_name)) ENGINE=InnoDB'
+);
+PREPARE dept_table_stmt FROM @dept_table_sql;
+EXECUTE dept_table_stmt;
+DEALLOCATE PREPARE dept_table_stmt;
+
+-- 先迁入历史部门名称，再添加外键。已存在的员工记录和空部门值保留。
+INSERT INTO dept (dept_name)
+SELECT DISTINCT e.dept FROM emp AS e
+WHERE e.dept IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM dept AS d WHERE d.dept_name = e.dept);
+
+SET @dept_fk_sql = IF(
+    EXISTS (
+        SELECT 1 FROM information_schema.referential_constraints
+        WHERE constraint_schema = DATABASE() AND table_name = 'emp'
+          AND constraint_name = 'fk_emp_dept'
+    ),
+    'SELECT 1',
+    'ALTER TABLE emp ADD CONSTRAINT fk_emp_dept FOREIGN KEY (dept)
+         REFERENCES dept (dept_name) ON UPDATE CASCADE ON DELETE RESTRICT'
+);
+PREPARE dept_fk_stmt FROM @dept_fk_sql;
+EXECUTE dept_fk_stmt;
+DEALLOCATE PREPARE dept_fk_stmt;

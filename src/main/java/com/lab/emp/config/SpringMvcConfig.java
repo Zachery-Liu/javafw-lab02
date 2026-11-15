@@ -33,7 +33,7 @@ public class SpringMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new LoginInterceptor())
-                .addPathPatterns("/emps", "/emps/**", "/logout");
+                .addPathPatterns("/emps", "/emps/**", "/depts", "/depts/**", "/logout");
     }
 
     @Override

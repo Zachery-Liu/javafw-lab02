@@ -31,6 +31,12 @@ body {
   font-weight: 600;
 }
 
+.topbar-menu.el-menu--horizontal {
+  --el-menu-horizontal-height: 58px;
+  border-bottom: 0;
+  margin-right: auto;
+}
+
 .page {
   padding-block: 28px;
 }
@@ -68,6 +74,10 @@ h1 {
   width: 112px;
 }
 
+.filters .department-select {
+  width: 168px;
+}
+
 .pagination {
   display: flex;
   justify-content: flex-end;
@@ -76,6 +86,17 @@ h1 {
 }
 
 @media (max-width: 560px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    padding-top: 12px;
+    gap: 4px;
+  }
+
+  .topbar-menu {
+    order: 3;
+    width: 100%;
+  }
+
   .filters .el-form-item {
     margin-right: 12px;
   }

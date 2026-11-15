@@ -1,7 +1,11 @@
 <script setup>
 import { computed, reactive, ref } from 'vue'
 
-const props = defineProps({ employee: { type: Object, default: null }, saving: Boolean })
+const props = defineProps({
+  employee: { type: Object, default: null },
+  departments: { type: Array, required: true },
+  saving: Boolean,
+})
 const emit = defineEmits(['cancel', 'save'])
 const form = ref()
 const draft = reactive({
@@ -19,7 +23,7 @@ async function save() {
   emit('save', {
     ...draft,
     empName: draft.empName.trim(),
-    dept: draft.dept?.trim() || null,
+    dept: draft.dept || null,
     post: draft.post?.trim() || null,
     hireDate: draft.hireDate || null,
   })
@@ -42,7 +46,10 @@ async function save() {
         </el-select>
       </el-form-item>
       <el-form-item label="部门">
-        <el-input v-model="draft.dept" maxlength="50" />
+        <el-select v-model="draft.dept" placeholder="选择部门（可留空）" filterable clearable>
+          <el-option v-for="dept in departments" :key="dept.deptId"
+                     :label="dept.deptName" :value="dept.deptName" />
+        </el-select>
       </el-form-item>
       <el-form-item label="岗位">
         <el-input v-model="draft.post" maxlength="50" />

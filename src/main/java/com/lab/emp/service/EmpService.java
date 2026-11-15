@@ -17,4 +17,6 @@ public interface EmpService {
     Emp get(Integer id);
 
     Page<Emp> pageQuery(int page, int size, EmpQueryDTO query);
+
+    Page<Emp> pageByDepartment(int page, int size, String department);
 }

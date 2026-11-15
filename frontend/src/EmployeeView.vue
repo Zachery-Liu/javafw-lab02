@@ -7,6 +7,7 @@ import EmployeeEditor from './EmployeeEditor.vue'
 const props = defineProps({ initialPage: { type: Object, default: null } })
 const emit = defineEmits(['session-expired'])
 const filters = reactive({ name: '', gender: '', dept: '' })
+const departments = ref([])
 let activeFilters = {}
 let requestNumber = 0
 const rows = ref(props.initialPage?.records ?? [])
@@ -25,12 +26,21 @@ const deleting = ref(false)
 const salaryFormat = new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 onMounted(() => {
+  loadDepartments()
   if (!props.initialPage) loadRows()
 })
 
 function showError(error) {
   if (error.status === 401) emit('session-expired')
   else ElMessage.error(error.message)
+}
+
+async function loadDepartments() {
+  try {
+    departments.value = await api('depts')
+  } catch (error) {
+    showError(error)
+  }
 }
 
 async function loadRows() {
@@ -143,7 +153,10 @@ async function deleteEmployees(row) {
         </el-select>
       </el-form-item>
       <el-form-item label="部门">
-        <el-input v-model.trim="filters.dept" placeholder="输入部门" maxlength="50" clearable />
+        <el-select v-model="filters.dept" class="department-select" placeholder="全部" filterable clearable>
+          <el-option v-for="dept in departments" :key="dept.deptId"
+                     :label="dept.deptName" :value="dept.deptName" />
+        </el-select>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" native-type="submit">查询</el-button>
@@ -193,6 +206,6 @@ async function deleteEmployees(row) {
     </div>
   </el-card>
 
-  <EmployeeEditor v-if="editorOpen" :employee="employee" :saving="saving"
+  <EmployeeEditor v-if="editorOpen" :employee="employee" :departments="departments" :saving="saving"
                   @cancel="editorOpen = false" @save="save" />
 </template>

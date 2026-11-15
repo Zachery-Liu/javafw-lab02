@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lab.emp.common.BusinessException;
 import com.lab.emp.config.SpringConfig;
 import com.lab.emp.dto.EmpQueryDTO;
+import com.lab.emp.entity.Dept;
 import com.lab.emp.entity.Emp;
 import com.lab.emp.mapper.EmpMapper;
 import com.lab.emp.service.EmpService;
+import com.lab.emp.service.DeptService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -26,12 +28,14 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
 public class EmployeeIntegrationTest {
     private static AnnotationConfigApplicationContext context;
     private static JdbcTemplate jdbc;
     private static EmpService employees;
+    private static DeptService departments;
     private static TransactionExamples transactions;
 
     @BeforeClass
@@ -48,10 +52,15 @@ public class EmployeeIntegrationTest {
         context.refresh();
 
         jdbc = new JdbcTemplate(context.getBean(DataSource.class));
+        jdbc.execute("CREATE TABLE dept (dept_id INT AUTO_INCREMENT PRIMARY KEY, "
+                + "dept_name VARCHAR(50) NOT NULL UNIQUE)");
         jdbc.execute("CREATE TABLE emp (emp_id INT AUTO_INCREMENT PRIMARY KEY, "
                 + "emp_name VARCHAR(50) NOT NULL, gender CHAR(1) DEFAULT '男', dept VARCHAR(50), "
-                + "post VARCHAR(50), salary DECIMAL(10,2), hire_date DATE, status TINYINT DEFAULT 1)");
+                + "post VARCHAR(50), salary DECIMAL(10,2), hire_date DATE, status TINYINT DEFAULT 1, "
+                + "CONSTRAINT fk_emp_dept FOREIGN KEY (dept) REFERENCES dept (dept_name) "
+                + "ON UPDATE CASCADE ON DELETE RESTRICT)");
         employees = context.getBean(EmpService.class);
+        departments = context.getBean(DeptService.class);
         transactions = context.getBean(TransactionExamples.class);
     }
 
@@ -65,6 +74,8 @@ public class EmployeeIntegrationTest {
     @Before
     public void clearRows() {
         jdbc.update("DELETE FROM emp");
+        jdbc.update("DELETE FROM dept");
+        jdbc.update("INSERT INTO dept (dept_name) VALUES (?), (?)", "研发部", "市场部");
     }
 
     @Test
@@ -103,6 +114,65 @@ public class EmployeeIntegrationTest {
                 () -> employees.deleteBatch(Arrays.asList(id, Integer.MAX_VALUE)));
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatus());
         assertEquals(id, employees.get(id).getEmpId());
+    }
+
+    @Test
+    public void departmentCrudAndRelatedEmployees() {
+        Dept dept = new Dept();
+        dept.setDeptName("支持部");
+        Integer id = departments.add(dept);
+        assertNotNull(id);
+        assertEquals(Long.valueOf(0), departments.get(id).getEmployeeCount());
+        assertEquals(id, departments.list("支持").get(0).getDeptId());
+
+        Integer employeeId = employees.add(employee("李一", "支持部", "女"));
+        employees.add(employee("李二", "支持部", "男"));
+        assertEquals(Long.valueOf(2), departments.get(id).getEmployeeCount());
+        assertEquals(2, employees.pageByDepartment(1, 1, "支持部").getTotal());
+        assertEquals(1, employees.pageByDepartment(1, 1, "支持部").getRecords().size());
+        assertEquals(HttpStatus.CONFLICT, assertThrows(BusinessException.class,
+                () -> departments.delete(id)).getStatus());
+
+        dept.setDeptName("客户支持部");
+        departments.update(dept);
+        assertEquals("客户支持部", employees.get(employeeId).getDept());
+        assertEquals(Long.valueOf(2), departments.get(id).getEmployeeCount());
+        assertEquals(0, employees.pageByDepartment(1, 5, "支持部").getTotal());
+
+        Emp updated = employees.get(employeeId);
+        updated.setDept(null);
+        employees.update(updated);
+        assertNull(employees.get(employeeId).getDept());
+        assertEquals(Long.valueOf(1), departments.get(id).getEmployeeCount());
+    }
+
+    @Test
+    public void departmentNameMustBeUniqueAndUnusedDepartmentCanBeDeleted() {
+        Dept dept = new Dept();
+        dept.setDeptName(" 研发部 ");
+        assertEquals(HttpStatus.CONFLICT, assertThrows(BusinessException.class,
+                () -> departments.add(dept)).getStatus());
+
+        dept.setDeptName("财务部");
+        Integer id = departments.add(dept);
+        dept.setDeptName("市场部");
+        assertEquals(HttpStatus.CONFLICT, assertThrows(BusinessException.class,
+                () -> departments.update(dept)).getStatus());
+        assertEquals("财务部", departments.get(id).getDeptName());
+
+        departments.delete(id);
+        assertEquals(HttpStatus.NOT_FOUND, assertThrows(BusinessException.class,
+                () -> departments.get(id)).getStatus());
+    }
+
+    @Test
+    public void unknownDepartmentCannotBeAssignedToEmployee() {
+        Emp unknown = employee("新员工", "不存在的部门", "女");
+        assertEquals(HttpStatus.BAD_REQUEST, assertThrows(BusinessException.class,
+                () -> employees.add(unknown)).getStatus());
+        assertEquals(0, count());
+        Integer id = employees.add(employee("暂无归属", null, "女"));
+        assertNull(employees.get(id).getDept());
     }
 
     @Test

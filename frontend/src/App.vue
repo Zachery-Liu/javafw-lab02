@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import { api } from './api.js'
+import DepartmentView from './DepartmentView.vue'
 import EmployeeView from './EmployeeView.vue'
 import LoginForm from './LoginForm.vue'
 
@@ -10,6 +11,7 @@ const starting = ref(true)
 const authenticated = ref(false)
 const signingOut = ref(false)
 const initialPage = ref(null)
+const view = ref('employees')
 
 onMounted(async () => {
   try {
@@ -25,6 +27,14 @@ onMounted(async () => {
 function endSession() {
   authenticated.value = false
   initialPage.value = null
+  view.value = 'employees'
+}
+
+function changeView(next) {
+  if (next !== view.value) {
+    initialPage.value = null
+    view.value = next
+  }
 }
 
 function sessionExpired() {
@@ -51,6 +61,11 @@ async function logout() {
     <header class="topbar">
       <div class="topbar-inner">
         <span class="brand">员工管理系统</span>
+        <el-menu v-if="authenticated" class="topbar-menu" mode="horizontal" :default-active="view"
+                 :ellipsis="false" @select="changeView">
+          <el-menu-item index="employees">员工管理</el-menu-item>
+          <el-menu-item index="departments">部门管理</el-menu-item>
+        </el-menu>
         <el-button v-if="authenticated" :loading="signingOut" @click="logout">退出登录</el-button>
       </div>
     </header>
@@ -58,7 +73,10 @@ async function logout() {
       <el-card v-if="starting" class="login-card" shadow="never">
         <el-skeleton :rows="2" animated />
       </el-card>
-      <EmployeeView v-else-if="authenticated" :initial-page="initialPage" @session-expired="sessionExpired" />
+      <template v-else-if="authenticated">
+        <DepartmentView v-if="view === 'departments'" @session-expired="sessionExpired" />
+        <EmployeeView v-else :initial-page="initialPage" @session-expired="sessionExpired" />
+      </template>
       <LoginForm v-else @signed-in="authenticated = true" />
     </main>
   </el-config-provider>

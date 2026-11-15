@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import {
   ElAlert, ElButton, ElCard, ElConfigProvider, ElDatePicker, ElDialog, ElForm, ElFormItem,
-  ElInput, ElInputNumber, ElLoading, ElOption, ElPagination, ElSelect, ElSkeleton, ElTable,
+  ElInput, ElInputNumber, ElLoading, ElMenu, ElMenuItem, ElOption, ElPagination, ElSelect, ElSkeleton, ElTable,
   ElTableColumn, ElTag,
 } from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -11,7 +11,8 @@ import './style.css'
 const app = createApp(App)
 for (const component of [
   ElAlert, ElButton, ElCard, ElConfigProvider, ElDatePicker, ElDialog, ElForm, ElFormItem,
-  ElInput, ElInputNumber, ElOption, ElPagination, ElSelect, ElSkeleton, ElTable, ElTableColumn, ElTag,
+  ElInput, ElInputNumber, ElMenu, ElMenuItem, ElOption, ElPagination, ElSelect, ElSkeleton, ElTable,
+  ElTableColumn, ElTag,
 ]) {
   app.component(component.name, component)
 }
