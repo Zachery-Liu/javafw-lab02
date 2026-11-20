@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lab.emp.common.Result;
 import com.lab.emp.dto.EmpQueryDTO;
 import com.lab.emp.entity.Emp;
+import com.lab.emp.entity.EmpTransfer;
+import com.lab.emp.interceptor.LoginInterceptor;
 import com.lab.emp.service.EmpService;
 import java.util.List;
 import javax.validation.Valid;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.SessionAttribute;
 
 @RestController
 @RequestMapping("/emps")
@@ -32,8 +35,9 @@ public class EmpController {
     }
 
     @PutMapping
-    public Result<Void> update(@Valid @RequestBody Emp emp) {
-        service.update(emp);
+    public Result<Void> update(@Valid @RequestBody Emp emp,
+                               @SessionAttribute(LoginInterceptor.LOGIN_USER) String operator) {
+        service.update(emp, operator);
         return Result.ok(null);
     }
 
@@ -51,6 +55,13 @@ public class EmpController {
     @GetMapping("/{id}")
     public Result<Emp> get(@PathVariable Integer id) {
         return Result.ok(service.get(id));
+    }
+
+    @GetMapping("/{id}/transfers")
+    public Result<Page<EmpTransfer>> transfers(@PathVariable Integer id,
+                                               @RequestParam(defaultValue = "1") int page,
+                                               @RequestParam(defaultValue = "5") int size) {
+        return Result.ok(service.transfers(id, page, size));
     }
 
     @GetMapping

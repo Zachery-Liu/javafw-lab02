@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.lab.emp.common.BusinessException;
 import com.lab.emp.dto.EmpQueryDTO;
 import com.lab.emp.entity.Emp;
+import com.lab.emp.entity.EmpTransfer;
 import com.lab.emp.mapper.EmpMapper;
+import com.lab.emp.mapper.EmpTransferMapper;
 import com.lab.emp.service.DeptService;
 import com.lab.emp.service.EmpService;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,10 +23,12 @@ import org.springframework.util.StringUtils;
 public class EmpServiceImpl implements EmpService {
     private final EmpMapper mapper;
     private final DeptService departments;
+    private final EmpTransferMapper transferMapper;
 
-    public EmpServiceImpl(EmpMapper mapper, DeptService departments) {
+    public EmpServiceImpl(EmpMapper mapper, DeptService departments, EmpTransferMapper transferMapper) {
         this.mapper = mapper;
         this.departments = departments;
+        this.transferMapper = transferMapper;
     }
 
     @Override
@@ -39,11 +44,22 @@ public class EmpServiceImpl implements EmpService {
 
     @Override
     @Transactional
-    public void update(Emp emp) {
+    public void update(Emp emp, String operator) {
         Integer id = requireId(emp.getEmpId());
-        emp.setDept(departments.resolveAssignment(emp.getDept()));
-        if (mapper.updateById(emp) == 0 && mapper.selectById(id) == null) {
+        Emp previous = mapper.findDepartmentForUpdate(id);
+        if (previous == null) {
             throw missingEmployee(id);
+        }
+        emp.setDept(departments.resolveAssignment(emp.getDept()));
+        mapper.updateById(emp);
+        if (!Objects.equals(previous.getDept(), emp.getDept())) {
+            EmpTransfer transfer = new EmpTransfer();
+            transfer.setEmpId(id);
+            transfer.setEmpName(emp.getEmpName());
+            transfer.setFromDept(previous.getDept());
+            transfer.setToDept(emp.getDept());
+            transfer.setOperatorName(operator);
+            transferMapper.insert(transfer);
         }
     }
 
@@ -98,11 +114,30 @@ public class EmpServiceImpl implements EmpService {
         return selectPage(page, size, new LambdaQueryWrapper<Emp>().eq(Emp::getDept, department));
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EmpTransfer> transfers(Integer id, int page, int size) {
+        requireId(id);
+        validatePage(page, size);
+        Page<EmpTransfer> result = transferMapper.selectPage(new Page<>(page, size),
+                new LambdaQueryWrapper<EmpTransfer>()
+                        .eq(EmpTransfer::getEmpId, id)
+                        .orderByDesc(EmpTransfer::getTransferId));
+        if (result.getTotal() == 0 && mapper.selectById(id) == null) {
+            throw missingEmployee(id);
+        }
+        return result;
+    }
+
     private Page<Emp> selectPage(int page, int size, LambdaQueryWrapper<Emp> filter) {
+        validatePage(page, size);
+        return mapper.selectPage(new Page<>(page, size), filter.orderByDesc(Emp::getEmpId));
+    }
+
+    private static void validatePage(int page, int size) {
         if (page < 1 || size < 1 || size > 100) {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "page 至少为 1，size 必须在 1 到 100 之间");
         }
-        return mapper.selectPage(new Page<>(page, size), filter.orderByDesc(Emp::getEmpId));
     }
 
     private static Integer requireId(Integer id) {

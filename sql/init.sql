@@ -60,3 +60,15 @@ SET @dept_fk_sql = IF(
 PREPARE dept_fk_stmt FROM @dept_fk_sql;
 EXECUTE dept_fk_stmt;
 DEALLOCATE PREPARE dept_fk_stmt;
+
+-- 保存调动发生时的姓名与部门名，后续改名或删除人员后仍保留历史。
+CREATE TABLE IF NOT EXISTS emp_transfer (
+    transfer_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    emp_id INT NOT NULL,
+    emp_name VARCHAR(50) NOT NULL,
+    from_dept VARCHAR(50),
+    to_dept VARCHAR(50),
+    operator_name VARCHAR(128) NOT NULL,
+    transferred_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    INDEX idx_emp_transfer_employee (emp_id, transfer_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

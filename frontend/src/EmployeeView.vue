@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { api } from './api.js'
 import EmployeeEditor from './EmployeeEditor.vue'
+import TransferHistory from './TransferHistory.vue'
 
 const props = defineProps({ initialPage: { type: Object, default: null } })
 const emit = defineEmits(['session-expired'])
@@ -20,6 +21,7 @@ const loading = ref(false)
 const listError = ref('')
 const editorOpen = ref(false)
 const employee = ref(null)
+const employeeHistory = ref(null)
 const openingId = ref(null)
 const saving = ref(false)
 const deleting = ref(false)
@@ -191,9 +193,10 @@ async function deleteEmployees(row) {
           <span v-else>—</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="112" fixed="right">
+      <el-table-column label="操作" width="178" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link :loading="row.empId === openingId" @click="openEdit(row)">编辑</el-button>
+          <el-button type="primary" link @click="employeeHistory = row">调动记录</el-button>
           <el-button type="danger" link :disabled="deleting" @click="deleteEmployees(row)">删除</el-button>
         </template>
       </el-table-column>
@@ -208,4 +211,6 @@ async function deleteEmployees(row) {
 
   <EmployeeEditor v-if="editorOpen" :employee="employee" :departments="departments" :saving="saving"
                   @cancel="editorOpen = false" @save="save" />
+  <TransferHistory v-if="employeeHistory" :employee="employeeHistory"
+                   @close="employeeHistory = null" @session-expired="emit('session-expired')" />
 </template>
