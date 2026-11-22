@@ -195,9 +195,11 @@ async function deleteEmployees(row) {
       </el-table-column>
       <el-table-column label="操作" width="178" fixed="right">
         <template #default="{ row }">
-          <el-button type="primary" link :loading="row.empId === openingId" @click="openEdit(row)">编辑</el-button>
-          <el-button type="primary" link @click="employeeHistory = row">调动记录</el-button>
-          <el-button type="danger" link :disabled="deleting" @click="deleteEmployees(row)">删除</el-button>
+          <el-space :size="8">
+            <el-button type="primary" link :loading="row.empId === openingId" @click="openEdit(row)">编辑</el-button>
+            <el-button type="primary" link @click="employeeHistory = row">调动记录</el-button>
+            <el-button type="danger" link :disabled="deleting" @click="deleteEmployees(row)">删除</el-button>
+          </el-space>
         </template>
       </el-table-column>
     </el-table>
