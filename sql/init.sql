@@ -72,3 +72,13 @@ CREATE TABLE IF NOT EXISTS emp_transfer (
     transferred_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     INDEX idx_emp_transfer_employee (emp_id, transfer_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS user_account (
+    username VARCHAR(128) COLLATE utf8mb4_0900_bin PRIMARY KEY,
+    password_hash VARCHAR(128) CHARACTER SET ascii NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 初始化实验管理员。盐和 PBKDF2-HMAC-SHA256 哈希使用 Base64，重复初始化保留已有密码。
+INSERT INTO user_account (username, password_hash)
+VALUES ('admin', 'iUt/0Asn2bHJCuVBkZcg8A==:T+ekDk7UquaRnaCou66FqGTZN6tRH1z/BqUZkKD1qDM=')
+ON DUPLICATE KEY UPDATE username = user_account.username;
